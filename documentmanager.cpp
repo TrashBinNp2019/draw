@@ -138,6 +138,7 @@ void DocumentManager::redrawLast( const QPointF &pivot, const QPointF &to )
         y1 = y2;
         y2 = buf;
     }
+    // this works :)
 
     switch ( tool.getCurrentShape() ) {
     case PaintTool::Rect: {
