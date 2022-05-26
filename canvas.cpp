@@ -1,8 +1,12 @@
 #include "canvas.h"
 
+#include <QTimer>
+
 Canvas::Canvas( QGraphicsScene *scene, QWidget *parent )
     : QGraphicsView( scene, parent )
 {
+    this->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+    this->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
 }
 
 const QPointF *Canvas::getLastPressed() const
@@ -36,3 +40,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *ev)
         emit mouseMoved( ev->modifiers(), ev->position() );
     }
 }
+
+void Canvas::resizer()
+{
+    this->scene()->setSceneRect( 0, 0, this->geometry().width(), this->geometry().height() );
+}
+
+void Canvas::resizeEvent(QResizeEvent *event)
+{
+    QTimer::singleShot( 0, this, SLOT( resizer() ) );
+}
+
+

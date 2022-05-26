@@ -245,6 +245,8 @@ void DockerWindow::enableDisplay()
 {
     if ( isDisplayEnabled ) return;
 
+    ui->horizontalSpacer->changeSize( 0, 0 );
+
     canvas = new Canvas( &doc.getScene(), this );
 
     canvas->setSizePolicy( { QSizePolicy::Expanding, QSizePolicy::Expanding } );
@@ -277,6 +279,8 @@ void DockerWindow::enableDisplay()
 void DockerWindow::disableDisplay()
 {
     if ( !isDisplayEnabled ) return;
+
+    ui->horizontalSpacer->changeSize( 20, 40, QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     ui->RectButton->setFlat( false );
     ui->CircleButton->setFlat( false );

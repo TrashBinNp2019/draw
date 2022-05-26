@@ -18,6 +18,8 @@ private slots:
     void mouseReleaseEvent( QMouseEvent *ev ) override;
     void mouseMoveEvent( QMouseEvent *ev ) override;
 
+    void resizer();
+
 signals:
     void mousePressed( Qt::KeyboardModifiers, QPointF );
     void mouseReleased( Qt::KeyboardModifiers, QPointF );
@@ -28,6 +30,8 @@ private:
     bool isBeingEdited;
     QPointF *lastPressed;
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // CANVAS_H
