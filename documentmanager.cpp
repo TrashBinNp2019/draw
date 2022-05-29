@@ -138,7 +138,6 @@ void DocumentManager::redrawLast( const QPointF &pivot, const QPointF &to )
         y1 = y2;
         y2 = buf;
     }
-    // this works :)
 
     switch ( tool.getCurrentShape() ) {
     case PaintTool::Rect: {
@@ -231,7 +230,7 @@ void DocumentManager::read( const QString &name )
 
     if ( !file.open(QIODevice::ReadOnly) || !doc.setContent( &file ) ) return;
 
-    parseSVG( doc );
+    getSceneFromSvg( doc );
 }
 
 void DocumentManager::write( const QString &name )
@@ -262,7 +261,7 @@ QGraphicsItem *DocumentManager::getSelectedItem() const
     return selected;
 }
 
-void DocumentManager::addNamedItem( const QGraphicsItem *item, const QString &name )
+void DocumentManager::addNamedItem( QGraphicsItem *item, const QString &name )
 {
     auto final_name = name;
 
@@ -290,14 +289,16 @@ void DocumentManager::addNamedItem( const QGraphicsItem *item, const QString &na
         }
     }
 
-    namedItems.push_back( std::make_pair( tool.getLast(), final_name ) );
+    namedItems.push_back( std::make_pair( item, final_name ) );
     emit itemsListChanged();
 }
 
-void DocumentManager::parseSVG( const QDomDocument &doc )
+void DocumentManager::getSceneFromSvg( const QDomDocument &doc )
 {
     auto header = doc.firstChildElement( "svg" );
     auto rect = header.attribute( "viewBox" ).split( " " );
+
+    if ( header.isNull() ) return;
 
     closeScene();
     scene.setSceneRect( {
@@ -329,13 +330,12 @@ void DocumentManager::parseSVG( const QDomDocument &doc )
 
         element = list.item( i ).firstChildElement( "ellipse" );
         if ( !element.isNull() ) {
-            auto ellipse = new QGraphicsEllipseItem();
-            ellipse->setRect(
+            auto ellipse = new QGraphicsEllipseItem	(
                             element.attribute("cx").toDouble() - element.attribute("rx").toDouble(),
                             element.attribute("cy").toDouble() - element.attribute("ry").toDouble(),
                             element.attribute("rx").toDouble() * 2,
                             element.attribute("ry").toDouble() * 2
-                         );
+                                                    );
 
             auto wrap = list.item( i ).toElement();
             parseStrokeAndFill( wrap, ellipse );

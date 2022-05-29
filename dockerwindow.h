@@ -3,10 +3,13 @@
 
 #include "canvas.h"
 #include "documentmanager.h"
+#include "restclient.h"
 
 #include <QLabel>
 #include <QListWidgetItem>
 #include <QMainWindow>
+#include <QInputDialog>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -27,6 +30,10 @@ private slots:
     void onActionOpenTriggered();
     void onActionCloseTriggered();
     void onActionExitTriggered();
+
+    void on_actionEnable_toggled( bool );
+    void on_actiondownload_triggered();
+    void on_actionUpload_triggered();
 
     void resizeToContents();
 
@@ -50,7 +57,7 @@ private slots:
     void on_PenColorButton_released();
     void on_BrushColorButton_released();
 
-    void on_widthDropDown_currentIndexChanged(int index);
+    void on_widthDropDown_currentIndexChanged( int );
 
     void on_Scene_Contents_Changed();
 
@@ -73,5 +80,7 @@ private:
 
     Canvas *canvas;
     DocumentManager doc;
+    QSettings settings;
+    RestClient client;
 };
 #endif // DOCKERWINDOW_H

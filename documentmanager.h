@@ -13,6 +13,7 @@ typedef std::pair< QGraphicsItem *, QString > NamedGraphicsItem;
 class DocumentManager : public QObject
 {
     Q_OBJECT
+
 public:
     explicit DocumentManager(QObject *parent = nullptr);
 
@@ -50,11 +51,11 @@ public:
     void read( const QString & );
     void write( const QString & );
 
-
     const std::list<NamedGraphicsItem> &getNamedItemsList() const;
 
 public slots:
     void cancelEditing();
+    void getSceneFromSvg( const QDomDocument & );
 
 signals:
     void itemsListChanged();
@@ -71,8 +72,7 @@ private:
 
     std::list< NamedGraphicsItem > namedItems;
 
-    void addNamedItem( const QGraphicsItem *, const QString & );
-    void parseSVG( const QDomDocument & );
+    void addNamedItem(QGraphicsItem *, const QString & );
     void parseStrokeAndFill(const QDomElement &, QAbstractGraphicsShapeItem * ) const;
     void parseStrokeAndFill(const QDomElement &, QGraphicsLineItem * ) const;
 };

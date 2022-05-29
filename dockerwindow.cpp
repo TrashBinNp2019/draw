@@ -1,5 +1,6 @@
 #include "dockerwindow.h"
 #include "ui_dockerwindow.h"
+#include "waitinginputdialog.h"
 #include <QTimer>
 #include <QSizePolicy>
 #include <QGraphicsItem>
@@ -7,14 +8,30 @@
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <QDialogButtonBox>
+#include <QDir>
 
 
 DockerWindow::DockerWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , isDisplayEnabled( false )
+    , settings( "fpm.puchinskij", "Draw" )
+    , client( settings, this )
 {
     ui->setupUi(this);
+
+    if ( client.check() ) {
+        client.init();
+
+        ui->actionEnable->setChecked( true );
+        ui->actionUpload->setDisabled( true );
+        ui->actiondownload->setDisabled( false );
+    } else {
+        ui->actionEnable->setChecked( false );
+        ui->actionUpload->setDisabled( true );
+        ui->actiondownload->setDisabled( true );
+    }
 
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT( onActionNewTriggered() ) );
     connect( ui->actionOpen, SIGNAL( triggered() ), this, SLOT( onActionOpenTriggered() ) );
@@ -27,6 +44,13 @@ DockerWindow::DockerWindow(QWidget *parent)
     connect( &doc.getPaintTool(), SIGNAL( brushChanged() ), this, SLOT( onBrushColorChange() ));
 
     connect( &doc, SIGNAL( itemsListChanged() ), this, SLOT( on_Scene_Contents_Changed() ) );
+
+    // TODO change
+    connect( &client, &RestClient::networkError, this, []( const QNetworkReply::NetworkError &err ){ qDebug() << "network err: " << err; } );
+    connect( &client, &RestClient::internalError, this, []( const QString &err ){ qDebug() << "internal err: " << err; } );
+    connect( &client, &RestClient::uploadSuccessful, this, [](){ qDebug() << "upload successful!"; } );
+    connect( &client, &RestClient::fileReady,
+             this, [ this ]( const QDomDocument &doc ){ this->doc.init(); this->doc.getSceneFromSvg( doc ); this->enableDisplay(); } );
 }
 
 DockerWindow::~DockerWindow()
@@ -52,7 +76,7 @@ void DockerWindow::onActionSaveAsTriggered()
     QFileDialog dlg{
                      this,
                      "Save to file",
-                     QStandardPaths::displayName( QStandardPaths::PicturesLocation ),
+                     QDir::home().absolutePath(),
                      "Scalable Vector Graphics (*.svg)"
                    };
     dlg.setDefaultSuffix( "svg" );
@@ -78,7 +102,7 @@ void DockerWindow::onActionOpenTriggered()
     QFileDialog dlg{
                      this,
                      "Open file",
-                     QStandardPaths::displayName( QStandardPaths::PicturesLocation ),
+                     QDir::home().absolutePath(),
                      "Scalable Vector Graphics (*.svg)"
                    };
     dlg.setDefaultSuffix( "svg" );
@@ -146,9 +170,9 @@ void DockerWindow::onCanvasMouseReleased( Qt::KeyboardModifiers, QPointF )
     }
     case Move: {
         if ( ui->RectButton->isFlat() ) {
-            action = Rotate;
-        } else {
             action = Scale;
+        } else {
+            action = Rotate;
         }
         break;
     }
@@ -267,11 +291,17 @@ void DockerWindow::enableDisplay()
     ui->LineButton->setFlat( true );
     ui->PathButton->setFlat( true );
 
+    action = Add;
+
     ui->widthDropDown->addItem( "1px", { 1 } );
     ui->widthDropDown->addItem( "2px", { 2 } );
     ui->widthDropDown->addItem( "4px", { 5 } );
     ui->widthDropDown->addItem( "10px", { 10 } );
     ui->widthDropDown->addItem( "15px", { 15 } );
+
+    ui->shapesList->clear();
+
+    ui->actionUpload->setDisabled( false );
 
     QTimer::singleShot( 0, this, SLOT( resizeToContents() ) ); // queue resize to the end of event loop
 }
@@ -292,6 +322,8 @@ void DockerWindow::disableDisplay()
 
     ui->widthDropDown->clear();
     ui->shapesList->clear();
+
+    ui->actionUpload->setDisabled( true );
 
     isDisplayEnabled = false;
 }
@@ -485,14 +517,71 @@ void DockerWindow::on_Scene_Contents_Changed()
 }
 
 
-void DockerWindow::on_shapesList_currentItemChanged( QListWidgetItem *current, QListWidgetItem *previous )
+void DockerWindow::on_shapesList_currentItemChanged( QListWidgetItem *, QListWidgetItem * )
 {
-
 }
 
 
 void DockerWindow::on_shapesList_itemSelectionChanged()
 {
     setButtonModeChange();
+}
+
+
+void DockerWindow::on_actiondownload_triggered()
+{
+    WaitingInputDialog dlg{ this };
+
+    connect( &client, SIGNAL( filesReady( const QStringList& ) ), &dlg, SLOT( setOptions( const QStringList& ) ) );
+    client.getFiles();
+
+
+    switch ( dlg.exec() ) {
+    case QDialog::Accepted: {
+        client.getFile( dlg.getSelectedOption() );
+        break;
+    }
+    case QDialog::Rejected: {
+        break;
+    }
+    default:
+        break;
+    }
+
+    disconnect( &client, SIGNAL( filesReady( const QStringList& ) ), &dlg, SLOT( setOptions( const QStringList& ) ) );
+}
+
+
+void DockerWindow::on_actionUpload_triggered()
+{
+    auto path = QDir::temp().absolutePath() + "/tmp.svg";
+    doc.write( path );
+
+    bool ok;
+    QString text = QInputDialog::getText(this,
+                                         tr("Upload"),
+                                         tr("File name:"), QLineEdit::Normal,
+                                         "", &ok);
+    if (ok && !text.isEmpty()) {
+        auto name = text.split( "." ).first() + ".svg";
+        client.uploadFile( name, path );
+    }
+}
+
+
+void DockerWindow::on_actionEnable_toggled( bool arg1 )
+{
+    if ( arg1 ) {
+        client.init();
+
+        ui->actionUpload->setDisabled( !isDisplayEnabled );
+        ui->actiondownload->setDisabled( false );
+    } else {
+        // TODO add confirmation dialogue for deleting all cloud data
+        client.wipe();
+
+        ui->actionUpload->setDisabled( true );
+        ui->actiondownload->setDisabled( true );
+    }
 }
 

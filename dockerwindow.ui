@@ -345,7 +345,17 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuCloud">
+    <property name="title">
+     <string>Cloud</string>
+    </property>
+    <addaction name="actionEnable"/>
+    <addaction name="separator"/>
+    <addaction name="actiondownload"/>
+    <addaction name="actionUpload"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuCloud"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew">
@@ -394,6 +404,27 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actiondownload">
+   <property name="text">
+    <string>Download</string>
+   </property>
+  </action>
+  <action name="actionUpload">
+   <property name="text">
+    <string>Upload</string>
+   </property>
+  </action>
+  <action name="actionEnable">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable</string>
    </property>
   </action>
  </widget>

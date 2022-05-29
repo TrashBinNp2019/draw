@@ -1,4 +1,4 @@
-QT       += core gui svg xml
+QT       += core gui svg xml network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -13,16 +13,21 @@ SOURCES += \
     dockerwindow.cpp \
     documentmanager.cpp \
     main.cpp \
-    painttool.cpp
+    painttool.cpp \
+    restclient.cpp \
+    waitinginputdialog.cpp
 
 HEADERS += \
     canvas.h \
     dockerwindow.h \
     documentmanager.h \
-    painttool.h
+    painttool.h \
+    waitinginputdialog.h \
+    restclient.h
 
 FORMS += \
-    dockerwindow.ui
+    dockerwindow.ui \
+    waitinginputdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
